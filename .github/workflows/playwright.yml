@@ -12,16 +12,51 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        node-version: '24'
     - name: Install dependencies
       run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
+    - name: Check out todo-be
+      run: |
+        git clone --no-checkout https://github.com/morosystems/todo-be.git "$RUNNER_TEMP/morosystems-todo-be"
+        git -C "$RUNNER_TEMP/morosystems-todo-be" checkout --detach 2cfa7c31aba1ee9f1086a3dcff22bae5c132952f
+    - name: Install todo-be dependencies
+      working-directory: ${{ runner.temp }}/morosystems-todo-be
+      run: npm install
+    - name: Start todo-be and wait for readiness
+      working-directory: ${{ runner.temp }}/morosystems-todo-be
+      run: |
+        npm start > "$RUNNER_TEMP/todo-be.log" 2>&1 &
+        backend_pid=$!
+        deadline=$((SECONDS + 60))
+
+        while (( SECONDS < deadline )); do
+          if ! kill -0 "$backend_pid" 2>/dev/null; then
+            echo "todo-be exited before becoming ready."
+            cat "$RUNNER_TEMP/todo-be.log"
+            exit 1
+          fi
+          if curl --fail --silent --show-error --connect-timeout 1 --max-time 5 \
+            http://localhost:8080/tasks > /dev/null 2>&1; then
+            echo "todo-be is ready."
+            exit 0
+          fi
+          sleep 1
+        done
+
+        echo "todo-be did not become ready within 60 seconds."
+        cat "$RUNNER_TEMP/todo-be.log"
+        exit 1
+    - name: Validate TypeScript
+      run: npx --no-install tsc --noEmit
+    # UI projects remain excluded from CI because Google may return an anti-automation challenge instead of search results.
+    - name: Run Playwright API tests
+      run: npx --no-install playwright test --project=api --workers=1
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
-        name: playwright-report
-        path: playwright-report/
+        name: playwright-artifacts
+        path: |
+          playwright-report/
+          test-results/
+          ${{ runner.temp }}/todo-be.log
         retention-days: 30
