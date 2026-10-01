@@ -2,8 +2,14 @@
   "name": "morosystems-playwright-tests",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:ui:chromium": "playwright test --project=chromium",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

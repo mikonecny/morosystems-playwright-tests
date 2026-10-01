@@ -19,15 +19,25 @@ export default defineConfig({
 
   projects: [
     {
+      name: 'api',
+      testDir: './tests/api',
+      use: {
+        baseURL: process.env.API_BASE_URL || 'http://localhost:8080',
+      },
+    },
+    {
       name: 'chromium',
+      testDir: './tests/ui',
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
+      testDir: './tests/ui',
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
+      testDir: './tests/ui',
       use: { ...devices['Desktop Safari'] },
     },
   ],
