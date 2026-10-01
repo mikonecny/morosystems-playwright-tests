@@ -101,6 +101,12 @@ The final UI test is fully automated. Google may return an unusual-traffic/CAPTC
 
 This occurred during the final automated Chromium runs in both headless and headed mode. When the required search results page is unavailable, the test correctly fails. UI tests are intentionally excluded from unattended GitHub Actions for this reliability reason.
 
+### Investigated alternative
+
+During development, an external CAPTCHA-solving service (2Captcha) was evaluated as a possible way to make the Google Search step more resilient to anti-automation challenges. The integration was successfully verified in isolation.
+
+It was intentionally not included in the final solution because it would introduce a paid third-party dependency, require an external API key, and add complexity unrelated to the application under test. The final implementation therefore keeps the assignment self-contained and reports the Google anti-automation challenge as an external limitation instead of bypassing it.
+
 ## CI/CD
 
 The [GitHub Actions workflow](.github/workflows/playwright.yml) is configured for pushes and pull requests targeting `main` or `master`. It:
